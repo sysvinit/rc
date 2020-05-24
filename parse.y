@@ -13,12 +13,12 @@ static Node *star, *nolist;
 Node *parsetree;	/* not using yylval because bison declares it as an auto */
 %}
 
-%token ANDAND BACKBACK BANG CASE COUNT DUP ELSE END FLAT FN FOR IF IN NOT
+%token ANDAND BACKBACK BANG CASE COUNT DUP END FLAT FN FOR IF IN NOT
 %token OROR PIPE REDIR SREDIR SUB SUBSHELL SWITCH TWIDDLE WHILE WORD HUH
 
 %left NOT
 %left '^' '='
-%right ELSE TWIDDLE
+%right TWIDDLE
 %left WHILE ')'
 %left ANDAND OROR '\n'
 %left BANG SUBSHELL
@@ -44,8 +44,8 @@ Node *parsetree;	/* not using yylval because bison declares it as an auto */
 %type <word> WORD
 %type <keyword> keyword
 %type <node> assign body brace case cbody cmd cmdsa cmdsan comword epilog
-	     first line nlwords paren redir sword simple iftail word words
-	     arg args else
+	     first line nlwords paren redir sword simple word words
+	     arg args
 
 %start rc
 
@@ -98,15 +98,10 @@ cbody	: cmd					{ $$ = mk(nCbody, $1, NULL); }
 	| case cbody				{ $$ = mk(nCbody, $1, $2); }
 	| cmdsan cbody				{ $$ = mk(nCbody, $1, $2); }
 
-iftail	: cmd else				{ $$ = $2 != NULL ? mk(nElse, $1, $2) : $1; }
-
-else	: /* empty */	%prec ELSE		{ $$ = NULL; }
-	| ELSE optnl cmd			{ $$ = $3; }
-
 cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
 	| simple
 	| brace epilog				{ $$ = mk(nBrace,$1,$2); }
-	| IF paren optnl iftail			{ $$ = mk(nIf,$2,$4); }
+	| IF paren optnl cmd			{ $$ = mk(nIf,$2,$4); }
 	| IF NOT optnl cmd			{ $$ = mk(nIfnot,$4); }
 	| FOR '(' word IN words ')' optnl cmd	{ $$ = mk(nForin,$3,$5,$8); }
 	| FOR '(' word ')' optnl cmd		{ $$ = mk(nForin,$3,star,$6); }
@@ -121,13 +116,13 @@ cmd	: /* empty */	%prec WHILE		{ $$ = NULL; }
 	| BANG optcaret cmd			{ $$ = mk(nBang,$3); }
 	| SUBSHELL optcaret cmd			{ $$ = mk(nSubshell,$3); }
 	| FN words brace			{ $$ = mk(nNewfn,$2,$3); }
-	| FN words	%prec ELSE		{ $$ = mk(nRmfn,$2); }
+	| FN words	%prec TWIDDLE		{ $$ = mk(nRmfn,$2); }
 
 optcaret : /* empty */	%prec '^'
 	| '^'
 
-simple	: first		%prec ELSE
-	| first args	%prec ELSE	{ $$ = ($2 != NULL ? mk(nArgs,$1,$2) : $1); }
+simple	: first		%prec TWIDDLE
+	| first args	%prec TWIDDLE	{ $$ = ($2 != NULL ? mk(nArgs,$1,$2) : $1); }
 
 args	: arg
 	| args arg			{ $$ = ($2 != NULL ? mk(nArgs,$1,$2) : $1); }
@@ -163,7 +158,6 @@ keyword	: FOR		{ $$ = "for"; }
 	| NOT		{ $$ = "not"; }
 	| SWITCH	{ $$ = "switch"; }
 	| FN		{ $$ = "fn"; }
-	| ELSE		{ $$ = "else"; }
 	| CASE		{ $$ = "case"; }
 	| TWIDDLE	{ $$ = "~"; }
 	| BANG		{ $$ = "!"; }

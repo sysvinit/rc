@@ -161,7 +161,6 @@ top:	while ((c = gchar()) == ' ' || c == '\t')
 		}
 		if (streq(buf, "not")) return NOT;
 		if (streq(buf, "for")) return FOR;
-		if (streq(buf, "else")) return ELSE;
 		if (streq(buf, "switch")) return SWITCH;
 		if (streq(buf, "while")) return WHILE;
 		if (streq(buf, "case")) return CASE;

@@ -103,9 +103,6 @@ void dump(Node *n, int indent) {
 	case nDup:
 		dump_dup("nDup", n, indent);
 		break;
-	case nElse:
-		dump_2("nElse", n, indent);
-		break;
 	case nEpilog:
 		dump_2("nEpilog", n, indent);
 		break;
@@ -195,7 +192,6 @@ void tree_dump(Node *f) {
 	case nAndalso:  fmtprint(f, "%X&&%X", n->u[0].p, n->u[1].p);            break;
 	case nAssign:   fmtprint(f, "%X=%X", n->u[0].p, n->u[1].p);             break;
 	case nConcat:   fmtprint(f, "%X^%X", n->u[0].p, n->u[1].p);             break;
-	case nElse:     fmtprint(f, "{%X}else %X", n->u[0].p, n->u[1].p);       break;
 	case nNewfn:    fmtprint(f, "fn %X {%X}", n->u[0].p, n->u[1].p);        break;
 	case nIf:       fmtprint(f, "if(%X)%X", n->u[0].p, n->u[1].p);          break;
 	case nOrelse:   fmtprint(f, "%X||%X", n->u[0].p, n->u[1].p);            break;

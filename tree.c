@@ -4,45 +4,6 @@
 
 #include "develop.h"
 
-/* convert if followed by ifnot to else */
-static Node *desugar_ifnot(Node *n) {
-	if (n->type == nBody && n->u[1].p && n->u[1].p->type == nIfnot) {
-		/* (body (if c x) (if-not y)) => (body (if c (else x y))) */
-		if (n->u[0].p->type == nIf &&
-				n->u[0].p->u[1].p->type != nElse) {
-			Node *yes = n->u[0].p;
-			Node *no = n->u[1].p;
-			Node *els = nalloc(offsetof(Node, u[2]));
-			els->type = nElse;
-			els->u[1].p = no->u[0].p;
-			els->u[0].p = yes->u[1].p;
-			yes->u[1].p = els;
-			n->u[1].p = NULL;
-		} else goto fail;
-	} else if (n->type == nBody &&
-			n->u[1].p && n->u[1].p->type == nBody &&
-			n->u[1].p->u[0].p &&
-				n->u[1].p->u[0].p->type == nIfnot) {
-		/* (body (if c x) (body (if-not y) z)) =>
-			(body (if c (else x y)) z) */
-		if (n->u[0].p->type == nIf &&
-				n->u[0].p->u[1].p->type != nElse) {
-			Node *yes = n->u[0].p;
-			Node *no = n->u[1].p->u[0].p;
-			Node *els = nalloc(offsetof(Node, u[2]));
-			els->type = nElse;
-			els->u[1].p = no->u[0].p;
-			els->u[0].p = yes->u[1].p;
-			yes->u[1].p = els;
-			n->u[1].p = n->u[1].p->u[1].p;
-		} else goto fail;
-	}
-
-	return n;
-fail:
-	rc_error("`if not' must follow `if'");
-	return NULL;
-}
 
 /* make a new node, pass it back to yyparse. Used to generate the parsetree. */
 
@@ -73,9 +34,9 @@ extern Node *mk(enum nodetype t,...) {
 		n->u[0].p = va_arg(ap, Node *);
 		break;
 	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn: case nCbody:
-	case nOrelse: case nPre: case nArgs: case nSwitch:
-	case nMatch: case nVarsub: case nWhile: case nLappend:
+	case nEpilog: case nIf: case nNewfn: case nCbody: case nOrelse:
+	case nPre: case nArgs: case nSwitch: case nMatch: case nVarsub:
+	case nWhile: case nLappend:
 		n = nalloc(offsetof(Node, u[2]));
 		n->u[0].p = va_arg(ap, Node *);
 		n->u[1].p = va_arg(ap, Node *);
@@ -107,7 +68,6 @@ extern Node *mk(enum nodetype t,...) {
 		tree_dump(n);
 		fprint(2, "---\n");
 	}
-	n = desugar_ifnot(n);
 	va_end(ap);
 	return n;
 }
@@ -139,13 +99,13 @@ extern Node *treecpy(Node *s, void *(*alloc)(size_t)) {
 			n->u[1].s = NULL;
 		n->u[2].i = s->u[2].i;
 		break;
-	case nBang: case nNowait: case nCase:
+	case nBang: case nNowait: case nCase: case nIfnot:
 	case nCount: case nFlat: case nRmfn: case nSubshell: case nVar:
 		n = (*alloc)(offsetof(Node, u[1]));
 		n->u[0].p = treecpy(s->u[0].p, alloc);
 		break;
 	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn: case nCbody:
+	case nEpilog: case nIf: case nNewfn: case nCbody:
 	case nOrelse: case nPre: case nArgs: case nSwitch:
 	case nMatch: case nVarsub: case nWhile: case nLappend:
 		n = (*alloc)(offsetof(Node, u[2]));
@@ -192,13 +152,13 @@ extern void treefree(Node *s) {
 		efree(s->u[0].s);
 		efree(s->u[1].s);
 		break;
-	case nBang: case nNowait:
+	case nBang: case nNowait: case nIfnot:
 	case nCount: case nFlat: case nRmfn:
 	case nSubshell: case nVar: case nCase:
 		treefree(s->u[0].p);
 		break;
-	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace: case nConcat:
-	case nElse: case nEpilog: case nIf: case nNewfn:
+	case nAndalso: case nAssign: case nBackq: case nBody: case nBrace:
+	case nConcat: case nEpilog: case nIf: case nNewfn:
 	case nOrelse: case nPre: case nArgs: case nCbody:
 	case nSwitch: case nMatch:  case nVarsub: case nWhile:
 	case nLappend:
