@@ -99,7 +99,7 @@ static bool Tconv(Format *f, int ignore) {
 		switch (n->type) {
 		default:	panic("this can't happen");		break;
 		case nCount:	fmtprint(f, "$#%s%#T%s", lp, n0, rp);	break;
-		case nFlat:	fmtprint(f, "$^%s%#T%s", lp, n0, rp);	break;
+		case nFlat:	fmtprint(f, "$\"%s%#T%s", lp, n0, rp);	break;
 		case nVar:	fmtprint(f, "$%s%#T%s", lp, n0, rp);	break;
 		}
 		break;
