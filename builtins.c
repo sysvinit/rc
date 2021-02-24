@@ -22,7 +22,7 @@
 
 static void b_break(char **), b_cd(char **), b_continue(char **), b_eval(char **), b_flag(char **),
 	b_exit(char **), b_newpgrp(char **), b_return(char **), b_shift(char **), b_umask(char **),
-	b_wait(char **), b_whatis(char **);
+	b_wait(char **), b_whatis(char **), b_getopt(char **);
 
 #if HAVE_SETRLIMIT
 static void b_limit(char **);
@@ -47,6 +47,7 @@ static struct {
 	{ b_exec,	"exec" },
 	{ b_exit,	"exit" },
 	{ b_flag,	"flag" },
+	{ b_getopt,	"getopt" },
 #if HAVE_SETRLIMIT
 	{ b_limit,	"limit" },
 #endif
@@ -636,6 +637,56 @@ static void b_limit(char **av) {
 	}
 }
 #endif
+
+static void b_getopt(char **av) {
+	List *optind, *zero;
+	char *tmp, *dollarzero;
+	unsigned int ac;
+	int c;
+
+	for (ac = 0; av[ac] != NULL; ac++)
+		; /* count arguments */
+
+	if (ac < 2) {
+		fprint(2, "%s: not enough arguments\n", av[0]);
+		set(FALSE);
+		return;
+	}
+
+	optind = varlookup("optind");
+	if (optind == NULL || (rc_optind = a2u(optind->w)) == -1)
+		rc_optind = 0;
+
+	zero = varlookup("0");
+	if (zero != NULL)
+		dollarzero = zero->w;
+	else
+		dollarzero = "rc";
+
+	/* reordering av to satisfy rc_getopt's expectations */
+	tmp = av[0];
+	av[0] = av[1];
+	av[1] = dollarzero;
+
+	c = rc_getopt(ac - 1, av + 1, av[0]);
+
+	av[1] = av[0];
+	av[0] = tmp;
+
+	/* save state */
+	varassign("optind", word(nprint("%ud", (unsigned int) rc_optind), NULL), FALSE);
+	if (c == -1)
+		varrm("optopt", FALSE);
+	else
+		varassign("optopt", word(nprint("%c", (char) c), NULL), FALSE);
+	if (rc_optarg == NULL)
+		varrm("optarg", FALSE);
+	else
+		varassign("optarg", word(nprint("%s", rc_optarg), NULL), FALSE);
+
+	set(TRUE);
+}
+
 
 extern char *compl_builtin(const char *text, int state) {
 	return compl_name(text, state, &builtins[0].name, arraysize(builtins), &builtins[1].name - &builtins[0].name);
