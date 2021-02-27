@@ -15,7 +15,7 @@ static bool Fconv(Format *f, int ignore) {
 	int c;
 
 	while ((c = *s++) != '\0')
-		if (dnw[c] || c == '*' || (c == '_' && *s == '_'))
+		if (dnw[c] || c == '+' || c == '-' || c == '*' || (c == '_' && *s == '_'))
 			fmtprint(f, "__%02x", c);
 		else
 			fmtputc(f, c);
