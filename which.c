@@ -78,7 +78,7 @@ static char *protect(char *in) {
 	int i;
 
 	for (i = 0; i < l; ++i)
-		out[i] = isprint(in[i]) ? in[i] : '?';
+		out[i] = (isprint(in[i]) || ((unsigned char) in[i] >= 0x80)) ? in[i] : '?';
 	out[i] = '\0';
 	return out;
 }
