@@ -1,8 +1,8 @@
 /* Define if you want rc to hand off exec errors to (e.g.) /bin/sh. */
-#define DEFAULTINTERP "/bin/sh"
+/* #undef DEFAULTINTERP "/bin/sh" */
 
 /* Define to the default path used if $PATH is empty when rc starts. */
-#define DEFAULTPATH "/usr/local/bin","/usr/bin","/bin","."
+#define DEFAULTPATH "/usr/local/bin","/usr/bin","/bin"
 
 /* Define if your kernel has SysV special SIGCLD semantics. */
 #define HAVE_SYSV_SIGCLD 1
