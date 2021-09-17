@@ -12,7 +12,7 @@ CC = cc
 DEF_CFLAGS = -Wall
 DEF_CPPFLAGS = -I$(PREFIX)/include
 DEF_LDFLAGS = -L$(PREFIX)/lib
-YACC = byacc
+YACC = bison -y
 
 # line editing library: null/edit/editline/readline/vrl
 EDIT = readline
@@ -88,9 +88,7 @@ lex.o parse.o: parse.c
 
 .y.c:
 	@echo "GEN $@"
-	$(YACC) -b $* -d $<
-	mv $*.tab.c $*.c
-	mv $*.tab.h $*.h
+	$(YACC) -o $@ -d $<
 
 builtins.o fn.o hash.o sigmsgs.o signal.o status.o: sigmsgs.c
 
