@@ -29,14 +29,40 @@ static char *dir_join(const char *a, const char *b) {
 }
 
 char *quote(char *p, int open) {
-	if (strpbrk(p, quote_chars)) {
-		char *r = mprint("%#S", p);
-		if (open)
-			r[strlen(r)-1] = '\0';
-		efree(p);
-		return r;
+	bool quoting = FALSE;
+	char *str = p, *buf = NULL, *filler;
+	size_t len = 0, nlen;
+	for (; *str != '\0'; str++) {
+		if (strchr(quote_chars, *str)) {
+			if (quoting && *str == '\'') filler = "'";
+			else if (quoting) 	     filler = "";
+			else if (*str == '\'') 	     filler = "''";
+			else 			     filler = "'";
+
+			quoting = TRUE;
+		} else {
+			if (quoting) filler = "'";
+			else         filler = "";
+
+			quoting = FALSE;
+		}
+
+		nlen = len + strlen(filler) + 1;
+		buf = erealloc(buf, nlen);
+
+		while (*filler != '\0')
+			buf[len++] = *filler++;
+
+		buf[len++] = *str;
 	}
-	return p;
+	if (quoting && !open) {
+		buf = erealloc(buf, len+1);
+		buf[len++] = '\'';
+	}
+	buf = erealloc(buf, len+1);
+	buf[len] = '\0';
+	efree(p);
+	return buf;
 }
 
 static char *unquote(const char *text) {
